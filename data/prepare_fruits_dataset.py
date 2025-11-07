@@ -118,81 +118,114 @@ class FruitsDatasetPreparer:
         
     def _create_eda_plots(self, class_counts, image_sizes, all_images, train_path):
         """Створює реальні графіки для EDA з датасету"""
-        fig, axes = plt.subplots(2, 2, figsize=(18, 12))
-        fig.suptitle("Exploratory Data Analysis (EDA) — Fruits Dataset", fontsize=18, fontweight='bold')
-
-        # 1️⃣ Розподіл зображень по класах
-        ax1 = axes[0, 0]
+        # 1️⃣ Розподіл зображень по класах (окремий файл)
         sorted_classes = sorted(class_counts.items(), key=lambda x: x[1], reverse=True)
         class_names = [x[0] for x in sorted_classes]
         counts = [x[1] for x in sorted_classes]
 
+        fig1, ax1 = plt.subplots(figsize=(12, max(6, len(class_names) * 0.25)))
         sns.barplot(x=counts, y=class_names, ax=ax1, palette="viridis")
         ax1.set_title("Розподіл зображень по класах", fontsize=14, fontweight='bold')
         ax1.set_xlabel("Кількість зображень", fontsize=12)
         ax1.set_ylabel("Клас", fontsize=12)
+        plt.tight_layout()
+        fig1.savefig('eda_classes_distribution.png', dpi=150, bbox_inches='tight')
+        plt.close(fig1)
 
-        # 2️⃣ Розподіл розмірів зображень
+        # 2️⃣ Розподіл розмірів зображень (окремий файл)
         if image_sizes:
-            ax2 = axes[0, 1]
             widths = [s[0] for s in image_sizes]
             heights = [s[1] for s in image_sizes]
 
-            sns.scatterplot(x=widths, y=heights, ax=ax2, alpha=0.6, s=25, color='coral', edgecolor=None)
+            fig2, ax2 = plt.subplots(figsize=(10, 8))
+            sns.scatterplot(x=widths, y=heights, ax=ax2, alpha=0.6, s=30, color='coral', edgecolor=None)
             ax2.set_title("Розподіл розмірів зображень", fontsize=14, fontweight='bold')
             ax2.set_xlabel("Ширина (px)", fontsize=12)
             ax2.set_ylabel("Висота (px)", fontsize=12)
             ax2.grid(True, alpha=0.3)
+            plt.tight_layout()
+            fig2.savefig('eda_image_sizes_scatter.png', dpi=150, bbox_inches='tight')
+            plt.close(fig2)
+        else:
+            # Якщо немає розмірів зображень — зберігаємо заглушку
+            fig2, ax2 = plt.subplots(figsize=(10, 4))
+            ax2.text(0.5, 0.5, "Немає доступних розмірів зображень для побудови графіка",
+                 ha='center', va='center', fontsize=12)
+            ax2.axis('off')
+            plt.tight_layout()
+            fig2.savefig('eda_image_sizes_scatter.png', dpi=150, bbox_inches='tight')
+            plt.close(fig2)
 
-        # 3️⃣ Гістограма балансу класів
-        ax3 = axes[1, 0]
-        sns.histplot(list(class_counts.values()), bins=15, kde=False, ax=ax3, color="mediumseagreen", edgecolor="black")
-        ax3.axvline(np.mean(list(class_counts.values())), color='red', linestyle='--', linewidth=2,
-                    label=f"Середнє: {np.mean(list(class_counts.values())):.0f}")
-        ax3.axvline(np.median(list(class_counts.values())), color='orange', linestyle='--', linewidth=2,
-                    label=f"Медіана: {np.median(list(class_counts.values())):.0f}")
+        # 3️⃣ Гістограма балансу класів (окремий файл)
+        fig3, ax3 = plt.subplots(figsize=(10, 6))
+        values = list(class_counts.values())
+        sns.histplot(values, bins=min(30, max(5, len(values))), kde=False, ax=ax3,
+                 color="mediumseagreen", edgecolor="black")
+        mean_val = np.mean(values) if values else 0
+        median_val = np.median(values) if values else 0
+        ax3.axvline(mean_val, color='red', linestyle='--', linewidth=2,
+                label=f"Середнє: {mean_val:.0f}")
+        ax3.axvline(median_val, color='orange', linestyle='--', linewidth=2,
+                label=f"Медіана: {median_val:.0f}")
         ax3.legend()
         ax3.set_title("Гістограма розподілу кількості зображень на клас", fontsize=14, fontweight='bold')
         ax3.set_xlabel("Кількість зображень на клас", fontsize=12)
         ax3.set_ylabel("Кількість класів", fontsize=12)
-
-        # 4️⃣ Приклади зображень
-        ax4 = axes[1, 1]
-        ax4.axis("off")
-        ax4.set_title("Приклади зображень з різних класів", fontsize=14, fontweight='bold', pad=10)
-
-        examples = []
-        for class_name in list(class_counts.keys())[:6]:
-            class_images = [img for img, cls in all_images if cls == class_name]
-            if class_images:
-                examples.append((class_images[0], class_name))
-
-        if examples:
-            example_fig, example_axes = plt.subplots(2, 3, figsize=(12, 8))
-            example_axes = example_axes.flatten()
-
-            for idx, (img_path, class_name) in enumerate(examples):
-                try:
-                    img = Image.open(img_path)
-                    example_axes[idx].imshow(img)
-                    example_axes[idx].set_title(class_name, fontsize=11, fontweight='bold')
-                    example_axes[idx].axis('off')
-                except Exception as e:
-                    example_axes[idx].set_title(f"Помилка для {class_name}")
-                    example_axes[idx].axis('off')
-
-            plt.tight_layout()
-            plt.savefig('eda_examples.png', dpi=150, bbox_inches='tight')
-            plt.show()
-
-        # Зберігаємо основні графіки
         plt.tight_layout()
-        plt.savefig('eda_analysis.png', dpi=150, bbox_inches='tight')
-        plt.show()
+        fig3.savefig('eda_class_count_hist.png', dpi=150, bbox_inches='tight')
+        plt.close(fig3)
 
+        # ОКРЕМИЙ графік для прикладів зображень
+        self._create_examples_plot(class_counts, all_images)
+        
         print("✅ Збережено: eda_analysis.png (основні графіки)")
         print("✅ Збережено: eda_examples.png (приклади зображень)")
 
+    def _create_examples_plot(self, class_counts, all_images):
+        """Створює окремий графік з випадковими прикладами зображень"""
+        import random
+        
+        examples = []
+        for class_name in list(class_counts.keys()):
+            class_images = [img for img, cls in all_images if cls == class_name]
+            if class_images:
+                # Вибираємо випадкове зображення з класу
+                random_image = random.choice(class_images)
+                examples.append((random_image, class_name))
+            if len(examples) >= 12:
+                break
+
+        # Інший варіант - перемішати всі приклади
+        # random.shuffle(examples)
+        
+        # Решта коду залишається без змін...
+        n_cols = 4
+        n_rows = (len(examples) + n_cols - 1) // n_cols
+        
+        fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, 4 * n_rows))
+        if n_rows == 1:
+            axes = [axes] if n_cols == 1 else axes
+        else:
+            axes = axes.flatten()
+
+        for idx, (img_path, class_name) in enumerate(examples):
+            try:
+                img = Image.open(img_path)
+                axes[idx].imshow(img)
+                axes[idx].set_title(f"{class_name}", fontsize=11, fontweight='bold')
+                axes[idx].axis('off')
+            except Exception as e:
+                print(f"Помилка завантаження {img_path}: {e}")
+                axes[idx].text(0.5, 0.5, f"Помилка\n{class_name}", 
+                            ha='center', va='center', transform=axes[idx].transAxes)
+                axes[idx].axis('off')
+
+        for idx in range(len(examples), len(axes)):
+            axes[idx].axis('off')
+
+        plt.tight_layout()
+        plt.savefig('eda_examples.png', dpi=150, bbox_inches='tight')
+        plt.show()
         
     def split_dataset(self, all_images, classes):
         """Розділяє датасет на train/val зі стратифікацією"""
