@@ -1,0 +1,12 @@
+.env
+*.npy
+
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyd
+*.cache
+
+*.log
+model/.neptune/
