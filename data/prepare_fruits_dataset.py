@@ -1,6 +1,8 @@
 """
 Скрипт для завантаження та підготовки датасету фруктів з Kaggle
 Датасет: https://www.kaggle.com/datasets/utkarshsaxenadn/fruits-classification
+run : venv/bin/python prepare_fruits_dataset.py
+in data directory
 """
 
 import os
