@@ -1,4 +1,4 @@
-path: /home/voyager/Documents/Y4Sem1/mml/FruitRecognitionProject/data/fruits_dataset
+path: /home/alona/універ/4курс/FruitRecognitionProject/data/fruits_dataset
 train: images/train
 val: images/val
 nc: 5
