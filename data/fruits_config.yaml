@@ -1,0 +1,10 @@
+path: /home/alona/універ/4курс/FruitRecognitionProject/data/fruits_dataset
+train: images/train
+val: images/val
+nc: 5
+names:
+  0: Apple
+  1: Banana
+  2: Grape
+  3: Mango
+  4: Strawberry
