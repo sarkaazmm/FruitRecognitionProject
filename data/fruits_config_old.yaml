@@ -1,4 +1,4 @@
-path: /home/alona/універ/4курс/FruitRecognitionProject/data/fruits_dataset
+path: /home/alona/універ/4курс/FruitRecognitionProject/data/fruits_dataset_old
 train: images/train
 val: images/val
 nc: 5
