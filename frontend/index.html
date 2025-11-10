@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YOLOv8 Fruit Detection</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="bg-animation">
+      <div class="neural-network"></div>
+    </div>
+
+    <header>
+      <nav>
+        <a href="#" class="logo">
+          <div class="logo-icon">🍎</div>
+          <span class="logo-text">FruitAI</span>
+        </a>
+        <ul class="nav-links">
+          <li><a href="#demo" class="active">Демо</a></li>
+          <li><a href="#about">Про систему</a></li>
+          <li><a href="#results">Результати</a></li>
+        </ul>
+        <div class="mobile-menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </nav>
+    </header>
+
+    <div class="mobile-nav">
+      <a href="#demo" class="active">Демо</a>
+      <a href="#about">Про систему</a>
+      <a href="#results">Результати</a>
+    </div>
+
+    <section class="hero">
+      <div class="hero-content">
+        <h1>Розпізнавання Фруктів</h1>
+        <p>Потужна нейронна мережа YOLOv8 для детекції об'єктів</p>
+        <div class="hero-stats">
+          <div class="stat">
+            <span class="stat-number">5</span>
+            <span class="stat-label">Класів фруктів</span>
+          </div>
+          <div class="stat">
+            <span class="stat-number">9700</span>
+            <span class="stat-label">Тренувальних зображень</span>
+          </div>
+          <div class="stat">
+            <span class="stat-number">95%+</span>
+            <span class="stat-label">Точність моделі</span>
+          </div>
+        </div>
+        <div class="cta-buttons">
+          <a href="#demo" class="btn btn-primary">Спробувати зараз</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="demo" class="section">
+      <h2>Завантажте зображення</h2>
+
+      <div class="demo-container">
+        <div class="upload-zone" id="uploadSection">
+          <div class="upload-icon">📸</div>
+          <div class="upload-text">
+            Перетягніть зображення або натисніть для вибору
+          </div>
+          <div class="upload-hint">Підтримується: JPG, PNG, WebP</div>
+          <input type="file" id="fileInput" accept="image/*" hidden />
+        </div>
+
+        <div class="controls-panel">
+          <div class="control-item">
+            <label>
+              Confidence Threshold
+              <span class="control-value" id="confValue">0.25</span>
+            </label>
+            <input
+              type="range"
+              id="confThreshold"
+              min="0.1"
+              max="0.9"
+              step="0.05"
+              value="0.25"
+            />
+          </div>
+          <div class="control-item">
+            <label>
+              IoU Threshold
+              <span class="control-value" id="iouValue">0.45</span>
+            </label>
+            <input
+              type="range"
+              id="iouThreshold"
+              min="0.1"
+              max="0.9"
+              step="0.05"
+              value="0.45"
+            />
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-large" id="detectBtn" disabled>
+          Розпізнати фрукти
+        </button>
+
+        <div class="error-message" id="errorMsg"></div>
+      </div>
+    </section>
+
+    <section
+      id="results"
+      class="section results-container"
+      style="display: none"
+    >
+      <h2>Результати детекції</h2>
+
+      <div class="stats-grid" id="stats"></div>
+
+      <div class="images-comparison">
+        <div class="image-panel">
+          <h3>Оригінал</h3>
+          <img id="originalImage" alt="Original" />
+        </div>
+        <div class="image-panel">
+          <h3>Детекція</h3>
+          <canvas id="resultCanvas"></canvas>
+        </div>
+      </div>
+
+      <div class="detections-panel" id="detectionsList"></div>
+    </section>
+
+    <section id="about" class="section">
+      <h2>Підтримувані класи</h2>
+      <div class="classes-grid">
+        <div class="class-card apple">
+          <div class="class-icon">🍎</div>
+          <div class="class-name">Apple</div>
+        </div>
+        <div class="class-card banana">
+          <div class="class-icon">🍌</div>
+          <div class="class-name">Banana</div>
+        </div>
+        <div class="class-card grape">
+          <div class="class-icon">🍇</div>
+          <div class="class-name">Grape</div>
+        </div>
+        <div class="class-card mango">
+          <div class="class-icon">🥭</div>
+          <div class="class-name">Mango</div>
+        </div>
+        <div class="class-card strawberry">
+          <div class="class-icon">🍓</div>
+          <div class="class-name">Strawberry</div>
+        </div>
+      </div>
+
+      <div class="tech-info">
+        <h3>Технологічний стек</h3>
+        <div class="tech-grid">
+          <div class="tech-item">
+            <div class="tech-label">Model</div>
+            <div class="tech-value">YOLOv8</div>
+          </div>
+          <div class="tech-item">
+            <div class="tech-label">Framework</div>
+            <div class="tech-value">Ultralytics</div>
+          </div>
+          <div class="tech-item">
+            <div class="tech-label">Backend</div>
+            <div class="tech-value">FastAPI</div>
+          </div>
+          <div class="tech-item">
+            <div class="tech-label">Dataset</div>
+            <div class="tech-value">9700 images</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="footer-content">
+        <p>YOLOv8 Fruit Detection System © 2024</p>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
