@@ -2,29 +2,56 @@
 ✓ Датасет успішно підготовлено!
 
 📊 Статистика:
-  • Класів: 5
-  • Train зображень: 7760
-  • Val зображень: 1940
-  • Загально: 9700
+  • Класів: 14
+  • Train зображень: 3673
+  • Val зображень: 919
+  • Загально: 4592
 
 📁 Створені файли та папки:
-  • fruits_dataset/ - датасет у форматі YOLO
+  • fruits_vegetable_dataset/ - датасет у форматі YOLO
     ├── images/
     │   ├── train/
     │   └── val/
-    └── labels/
-        ├── train/
-        └── val/
-  • fruits_config.yaml - конфігураційний файл
-  • eda_analysis.png - графіки EDA
-  • eda_examples.png - приклади зображень
+    ├── labels/
+    │   ├── train/
+    │   └── val/
+    └── data.yaml - конфігураційний файл
+  • eda_*.png - графіки аналізу датасету
 
 🚀 Наступні кроки:
-  1. Перевірте датасет: fruits_dataset/
-  2. Використовуйте fruits_config.yaml для тренування моделі
-  3. Передайте папку fruits_dataset/ та fruits_config.yaml розробнику моделі
+  1. Перевірте датасет: fruits_vegetable_dataset/
+  2. Використовуйте data.yaml для тренування моделі
 
 📝 Приклад використання для тренування YOLOv8:
   from ultralytics import YOLO
-  model = YOLO('yolov8n-cls.pt')  # для класифікації
-  results = model.train(data='fruits_config.yaml', epochs=100)
+  
+  # Для детекції об'єктів
+  model = YOLO('yolov8n.pt')
+  results = model.train(
+      data='fruits_vegetable_dataset/data.yaml',
+      epochs=100,
+      imgsz=640,
+      batch=16
+  )
+  
+  # Для валідації
+  metrics = model.val()
+  
+  # Для предикції
+  results = model.predict(source='path/to/image.jpg')
+
+📋 Класи у датасеті:
+  0: class_0
+  1: class_1
+  2: class_2
+  3: class_3
+  4: class_4
+  5: class_5
+  6: class_6
+  7: class_7
+  8: class_8
+  9: class_9
+  10: class_10
+  11: class_11
+  12: class_12
+  13: class_13
