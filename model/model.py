@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from select_photo import select_image_and_predict
+
 import neptune
 from ultralytics import YOLO, settings
 from dotenv import load_dotenv
@@ -27,7 +27,7 @@ else:
     USE_NEPTUNE = False
 
 try:
-    with open('/home/alona/універ/4курс/FruitRecognitionProject/data/fruits_config.yaml', 'r') as f:
+    with open('/home/alona/універ/4курс/FruitRecognitionProject/data/Fruits-detection/data.yaml', 'r') as f:
         config = yaml.safe_load(f)
         num_classes = config.get('nc', 'N/A')
         class_names = config.get('names', [])
@@ -38,47 +38,38 @@ except Exception as e:
     num_classes = 'N/A'
     class_names = []
 
-checkpoint_path = Path('yolo-fruits/exp_final/weights/last.pt')
-resume_training = checkpoint_path.exists()
+print("🚀 Початок НОВОГО тренування з нуля з аугментаціями на 75 епох...")
 
-if resume_training:
-    print(f"\nFound checkpoint: {checkpoint_path}")
-    try:
-        ckpt = torch.load(checkpoint_path, map_location='cpu')
-        last_epoch = ckpt.get('epoch', -1)
-        total_epochs = ckpt.get('best_fitness', {})
-        
-    except Exception as e:
-        print(f"Could not read checkpoint info: {e}")
+# 1. Завжди завантажуємо свіжу модель 'yolov8n.pt'
+model = YOLO('yolov8m.pt') 
 
-if resume_training:
-    print("\nResuming training from checkpoint...")
-    model = YOLO(str(checkpoint_path))
-
-    results = model.train(resume=True)
+# 2. Запускаємо тренування
+results = model.train(
+    data='/home/alona/універ/4курс/FruitRecognitionProject/data/Fruits-detection/data.yaml',
     
-else:
-    model = YOLO('yolov8n.pt')
-
-    results = model.train(
-        data='/home/alona/універ/4курс/FruitRecognitionProject/data/fruits_config.yaml',
-        epochs=50,
-        imgsz=640,
-        batch=16,
-        patience=10,
-        save=True,
-        device=0,            
-        project='yolo-fruits',
-        name='exp_final',
-        exist_ok=True,
-        pretrained=True,
-        optimizer='Adam',
-        verbose=True,
-        seed=42,
-        deterministic=True,
-        cos_lr=True,
-        amp=True,
-    )
+    # --- Ваші нові параметри ---
+    epochs=120,
+    
+    # --- Інші параметри ---
+    imgsz=640,
+    batch=8,
+    patience=10, # Модель зупиниться раніше, якщо перестане покращуватись
+    save=True,
+    device=0,            
+    project='yolo-fruits',
+    
+    # (ВАЖЛИВО: Нове ім'я для чистого експерименту)
+    name='exp_scratch_2', 
+    
+    exist_ok=True, # Дозволяє перезаписати, якщо папка існує
+    pretrained=True, 
+    optimizer='Adam',
+    verbose=True,
+    seed=42,
+    deterministic=True,
+    cos_lr=True,
+    amp=True,
+)
 
 metrics = model.val()
 
