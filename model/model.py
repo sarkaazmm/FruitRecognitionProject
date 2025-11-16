@@ -27,7 +27,7 @@ else:
     USE_NEPTUNE = False
 
 try:
-    with open('/home/alona/універ/4курс/FruitRecognitionProject/data/Fruits-detection/data.yaml', 'r') as f:
+    with open('../data/Fruits-detection/data.yaml', 'r') as f:
         config = yaml.safe_load(f)
         num_classes = config.get('nc', 'N/A')
         class_names = config.get('names', [])
@@ -38,7 +38,6 @@ except Exception as e:
     num_classes = 'N/A'
     class_names = []
 
-print("🚀 Початок НОВОГО тренування з нуля з аугментаціями на 75 епох...")
 model = YOLO('yolov8m.pt') 
 
 results = model.train(
