@@ -1,6 +1,6 @@
 """
 Скрипт для завантаження та підготовки датасету фруктів/овочів з Kaggle
-Датасет: https://www.kaggle.com/datasets/kvnpatel/fruits-vegetable-detection-for-yolov4
+Датасет: https://www.kaggle.com/datasets/lakshaytyagi01/fruit-detection
 Запуск: python prepare_yolo_fruits_dataset.py
 """
 
@@ -41,7 +41,7 @@ class YOLOFruitsDatasetPreparer:
         
         try:
             print("\n🔄 Завантаження датасету...")
-            path = kagglehub.dataset_download("kvnpatel/fruits-vegetable-detection-for-yolov4")
+            path = kagglehub.dataset_download("lakshaytyagi01/fruit-detection")
             self.kaggle_path = Path(path)
             print(f"✓ Датасет завантажено у: {self.kaggle_path}")
             

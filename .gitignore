@@ -2,6 +2,7 @@
 *.npy
 
 *.txt
+!dataset_summary.txt
 
 venv/
 .venv/
