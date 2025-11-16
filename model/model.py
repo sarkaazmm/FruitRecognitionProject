@@ -39,29 +39,22 @@ except Exception as e:
     class_names = []
 
 print("🚀 Початок НОВОГО тренування з нуля з аугментаціями на 75 епох...")
-
-# 1. Завжди завантажуємо свіжу модель 'yolov8n.pt'
 model = YOLO('yolov8m.pt') 
 
-# 2. Запускаємо тренування
 results = model.train(
-    data='/home/alona/універ/4курс/FruitRecognitionProject/data/Fruits-detection/data.yaml',
-    
-    # --- Ваші нові параметри ---
+    data='../data/Fruits-detection/data.yaml',
+
     epochs=120,
-    
-    # --- Інші параметри ---
     imgsz=640,
     batch=8,
-    patience=10, # Модель зупиниться раніше, якщо перестане покращуватись
+    patience=10, 
     save=True,
     device=0,            
     project='yolo-fruits',
-    
-    # (ВАЖЛИВО: Нове ім'я для чистого експерименту)
+
     name='exp_scratch_2', 
     
-    exist_ok=True, # Дозволяє перезаписати, якщо папка існує
+    exist_ok=True,
     pretrained=True, 
     optimizer='Adam',
     verbose=True,
