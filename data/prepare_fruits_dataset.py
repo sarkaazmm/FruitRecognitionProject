@@ -33,6 +33,32 @@ class YOLOFruitsDatasetPreparer:
         self.train_split = 0.8
         self.val_split = 0.2
         
+    def _is_float(self, x):
+        """Допоміжна функція для перевірки чи є рядок числом"""
+        try:
+            float(x)
+            return True
+        except ValueError:
+            return False
+        
+    def print_dataset_structure(self):
+        """Друкує структуру датасету для дебагу"""
+        print("\n📁 ДЕТАЛЬНА СТРУКТУРА ДАТАСЕТУ:")
+        print("=" * 50)
+        
+        items = list(self.kaggle_path.rglob('*'))
+        for path in sorted(items)[:100]:  # Обмежимо вивід для великих датасетів
+            if path.is_dir():
+                file_count = len(list(path.glob('*')))
+                print(f"📁 {path.relative_to(self.kaggle_path)}/ ({file_count} items)")
+            else:
+                size = path.stat().st_size
+                print(f"  📄 {path.relative_to(self.kaggle_path)} ({size} bytes)")
+        
+        if len(items) > 100:
+            print(f"  ... і ще {len(items) - 100} елементів")
+        print("=" * 50)
+        
     def download_dataset(self):
         """Завантажує датасет з Kaggle через kagglehub"""
         print("=" * 60)
@@ -46,11 +72,14 @@ class YOLOFruitsDatasetPreparer:
             print(f"✓ Датасет завантажено у: {self.kaggle_path}")
             
             # Виводимо структуру датасету
-            print(f"\n📁 Структура датасету:")
-            for item in sorted(self.kaggle_path.rglob('*'))[:20]:
-                if item.is_file():
-                    rel_path = item.relative_to(self.kaggle_path)
-                    print(f"  {rel_path}")
+            print(f"\n📁 Базова структура датасету:")
+            for item in sorted(self.kaggle_path.glob('*'))[:15]:
+                if item.is_dir():
+                    file_count = len(list(item.glob('*')))
+                    print(f"  📁 {item.name}/ ({file_count} items)")
+                else:
+                    size = item.stat().st_size
+                    print(f"  📄 {item.name} ({size} bytes)")
             
             return True
         except Exception as e:
@@ -63,6 +92,9 @@ class YOLOFruitsDatasetPreparer:
         print("КРОК 2: Exploratory Data Analysis (EDA)")
         print("=" * 60)
         
+        # Виводимо детальну структуру для дебагу
+        self.print_dataset_structure()
+        
         # Пошук YOLO структури (images та labels)
         images_dirs = list(self.kaggle_path.rglob('images'))
         labels_dirs = list(self.kaggle_path.rglob('labels'))
@@ -70,6 +102,12 @@ class YOLOFruitsDatasetPreparer:
         print(f"\n🔍 Пошук структури YOLO...")
         print(f"  Знайдено папок 'images': {len(images_dirs)}")
         print(f"  Знайдено папок 'labels': {len(labels_dirs)}")
+        
+        # Додатково: виведемо всі знайдені папки для дебагу
+        for img_dir in images_dirs:
+            print(f"    📁 images: {img_dir.relative_to(self.kaggle_path)}")
+        for lbl_dir in labels_dirs:
+            print(f"    📁 labels: {lbl_dir.relative_to(self.kaggle_path)}")
         
         # Збираємо всі зображення та анотації
         all_images = []
@@ -81,43 +119,141 @@ class YOLOFruitsDatasetPreparer:
             print("\n✓ Знайдено YOLO структуру")
             
             for images_dir in images_dirs:
-                # Шукаємо відповідну папку labels
-                labels_dir = images_dir.parent / 'labels' / images_dir.name
-                if not labels_dir.exists():
-                    labels_dir = images_dir.parent.parent / 'labels' / images_dir.name
+                # Різні варіанти розташування labels
+                possible_labels_dirs = [
+                    images_dir.parent / 'labels' / images_dir.name,
+                    images_dir.parent / 'labels',
+                    images_dir.parent.parent / 'labels' / images_dir.name,
+                    images_dir.parent.parent / 'labels',
+                ]
                 
-                if labels_dir.exists():
-                    print(f"\n  Обробка: {images_dir}")
-                    images = list(images_dir.glob('*.jpg')) + list(images_dir.glob('*.png'))
+                labels_dir_found = None
+                for labels_dir in possible_labels_dirs:
+                    if labels_dir.exists():
+                        labels_dir_found = labels_dir
+                        break
+                
+                if labels_dir_found:
+                    print(f"\n  📂 Обробка: {images_dir.relative_to(self.kaggle_path)}")
+                    print(f"  📍 Labels: {labels_dir_found.relative_to(self.kaggle_path)}")
                     
+                    # Шукаємо всі зображення
+                    images = list(images_dir.glob('*.jpg')) + list(images_dir.glob('*.png')) + list(images_dir.glob('*.jpeg'))
+                    print(f"  📷 Знайдено зображень: {len(images)}")
+                    
+                    matched_count = 0
                     for img_path in images:
-                        label_path = labels_dir / (img_path.stem + '.txt')
-                        if label_path.exists():
-                            all_images.append(str(img_path))
-                            all_labels.append(str(label_path))
-        
-        # Варіант 2: Пошук всіх зображень та label файлів
-        else:
-            print("\n🔍 Пошук всіх зображень та анотацій...")
+                        # Різні варіанти назв файлів для labels
+                        possible_label_names = [
+                            img_path.stem + '.txt',
+                            img_path.name + '.txt',  # для деяких датасетів
+                        ]
+                        
+                        for label_name in possible_label_names:
+                            label_path = labels_dir_found / label_name
+                            if label_path.exists():
+                                all_images.append(str(img_path))
+                                all_labels.append(str(label_path))
+                                matched_count += 1
+                                break
+                    
+                    print(f"  ✅ Знайдено анотацій: {matched_count}")
+    
+        # Варіант 2: Пошук всіх зображень та label файлів рекурсивно
+        if not all_images:
+            print("\n🔍 Рекурсивний пошук всіх зображень та анотацій...")
             
-            for img_path in self.kaggle_path.rglob('*.jpg'):
-                # Шукаємо відповідний label файл
+            # Шукаємо всі зображення
+            all_image_files = list(self.kaggle_path.rglob('*.jpg')) + list(self.kaggle_path.rglob('*.png')) + list(self.kaggle_path.rglob('*.jpeg'))
+            print(f"  📷 Знайдено всіх зображень: {len(all_image_files)}")
+            
+            matched_count = 0
+            for img_path in all_image_files:
+                # Шукаємо відповідний label файл у різних місцях
                 possible_label_paths = [
                     img_path.parent / (img_path.stem + '.txt'),
+                    img_path.parent.parent / 'labels' / (img_path.stem + '.txt'),
                     img_path.parent.parent / 'labels' / img_path.parent.name / (img_path.stem + '.txt'),
+                    img_path.with_suffix('.txt'),  # той самий каталог
                 ]
+                
+                # Додатково: шукаємо в папках labels на тому ж рівні
+                for labels_dir in labels_dirs:
+                    possible_label_paths.append(labels_dir / (img_path.stem + '.txt'))
+                    possible_label_paths.append(labels_dir / img_path.parent.name / (img_path.stem + '.txt'))
                 
                 for label_path in possible_label_paths:
                     if label_path.exists():
                         all_images.append(str(img_path))
                         all_labels.append(str(label_path))
+                        matched_count += 1
                         break
+            
+            print(f"  ✅ Знайдено зображень з анотаціями: {matched_count}")
+        
+        # Варіант 3: Якщо датасет має іншу структуру (наприклад, один загальний каталог)
+        if not all_images:
+            print("\n🔍 Спроба альтернативного пошуку...")
+            
+            # Шукаємо будь-які txt файли (анотації)
+            all_txt_files = list(self.kaggle_path.rglob('*.txt'))
+            print(f"  📄 Знайдено txt файлів: {len(all_txt_files)}")
+            
+            # Фільтруємо тільки ті, що можуть бути анотаціями YOLO
+            valid_annotations = []
+            for txt_file in all_txt_files:
+                try:
+                    with open(txt_file, 'r') as f:
+                        first_line = f.readline().strip()
+                        if first_line:  # Перевіряємо що файл не порожній
+                            parts = first_line.split()
+                            # Перевіряємо формат YOLO (class_id x_center y_center width height)
+                            if len(parts) == 5 and all(self._is_float(x) for x in parts[1:]):
+                                valid_annotations.append(txt_file)
+                except:
+                    continue
+            
+            print(f"  ✅ Валідних анотацій YOLO: {len(valid_annotations)}")
+            
+            # Шукаємо відповідні зображення для кожної анотації
+            matched_count = 0
+            for annotation_path in valid_annotations:
+                annotation_dir = annotation_path.parent
+                annotation_stem = annotation_path.stem
+                
+                # Можливі розширення зображень
+                possible_image_extensions = ['.jpg', '.png', '.jpeg', '.JPG', '.PNG', '.JPEG']
+                
+                for ext in possible_image_extensions:
+                    image_path = annotation_dir / (annotation_stem + ext)
+                    if image_path.exists():
+                        all_images.append(str(image_path))
+                        all_labels.append(str(annotation_path))
+                        matched_count += 1
+                        break
+                
+                # Якщо не знайшли в тому ж каталозі, шукаємо в images
+                if annotation_path not in all_labels:
+                    for images_dir in images_dirs:
+                        for ext in possible_image_extensions:
+                            image_path = images_dir / (annotation_stem + ext)
+                            if image_path.exists():
+                                all_images.append(str(image_path))
+                                all_labels.append(str(annotation_path))
+                                matched_count += 1
+                                break
+            
+            print(f"  ✅ Знайдено пар зображень-анотацій: {matched_count}")
         
         if not all_images:
             print("\n❌ Не знайдено зображень з анотаціями!")
+            print("\n💡 Можливі причини:")
+            print("   • Датасет може мати нестандартну структуру")
+            print("   • Анотації можуть бути в іншому форматі (не YOLO)")
+            print("   • Файли можуть мати інші розширення")
             return None, None, None
         
-        print(f"\n✓ Знайдено {len(all_images)} зображень з анотаціями")
+        print(f"\n✅ Знайдено {len(all_images)} зображень з анотаціями")
         
         # Аналіз класів та bbox
         class_counts = Counter()
@@ -169,15 +305,17 @@ class YOLOFruitsDatasetPreparer:
                     if 'names' in data:
                         class_to_name = {i: name for i, name in enumerate(data['names'])}
                         print(f"\n✓ Завантажено назви класів з data.yaml")
-            except:
+            except Exception as e:
+                print(f"Помилка читання data.yaml: {e}")
                 pass
         elif names_file.exists():
             try:
                 with open(names_file, 'r') as f:
-                    names = [line.strip() for line in f.readlines()]
+                    names = [line.strip() for line in f.readlines() if line.strip()]
                     class_to_name = {i: name for i, name in enumerate(names)}
                     print(f"\n✓ Завантажено назви класів з names.txt")
-            except:
+            except Exception as e:
+                print(f"Помилка читання names.txt: {e}")
                 pass
         
         # Створення графіків EDA
@@ -320,9 +458,12 @@ class YOLOFruitsDatasetPreparer:
         
         print("\n✅ Графіки EDA збережено:")
         print("   • eda_class_distribution.png")
-        print("   • eda_image_sizes.png")
-        print("   • eda_bbox_stats.png")
-        print("   • eda_objects_per_image.png")
+        if image_sizes:
+            print("   • eda_image_sizes.png")
+        if bbox_stats:
+            print("   • eda_bbox_stats.png")
+        if objects_per_image:
+            print("   • eda_objects_per_image.png")
         
     def split_dataset(self, all_data):
         """Розділяє датасет на train/val"""
