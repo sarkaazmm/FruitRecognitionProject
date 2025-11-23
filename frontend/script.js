@@ -24,8 +24,9 @@ const FRUIT_COLORS = {
     'Apple': '#FF6B6B',
     'Banana': '#FFE66D',
     'Grape': '#8B5CF6',
-    'Mango': '#FFA500',
-    'Strawberry': '#FF1744'
+    'Orange': '#FF9800',
+    'Pineapple': '#FFC107',
+    'Watermelon': '#F44336'
 };
 
 function init() {
@@ -205,13 +206,37 @@ function drawDetections(img, detections) {
         ctx.lineWidth = 4;
         ctx.strokeRect(bbox.x1, bbox.y1, bbox.width, bbox.height);
 
+        const label = `${det.class_name} ${Math.round(det.confidence * 100)}%`;
+        ctx.font = 'bold 16px Arial';
+        const textMetrics = ctx.measureText(label);
+        const textWidth = textMetrics.width;
+        const textHeight = 20;
+        const padding = 8;
+
+        const labelWidth = textWidth + padding * 2;
+        const labelHeight = textHeight + padding;
+
+        let labelX = bbox.x1;
+        let labelY = bbox.y1 - labelHeight;
+
+        if (labelY < 0) {
+            labelY = bbox.y1;
+        }
+
+        if (labelX + labelWidth > canvas.width) {
+            labelX = canvas.width - labelWidth;
+        }
+
+        if (labelX < 0) {
+            labelX = 0;
+        }
+
         ctx.fillStyle = color;
-        ctx.fillRect(bbox.x1, bbox.y1 - 30, bbox.width, 30);
+        ctx.fillRect(labelX, labelY, labelWidth, labelHeight);
 
         ctx.fillStyle = '#0a0a0f';
-        ctx.font = 'bold 18px Arial';
-        const label = `${det.class_name} ${Math.round(det.confidence * 100)}%`;
-        ctx.fillText(label, bbox.x1 + 5, bbox.y1 - 8);
+        ctx.font = 'bold 16px Arial';
+        ctx.fillText(label, labelX + padding, labelY + textHeight - 2);
     });
 }
 
