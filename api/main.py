@@ -6,6 +6,8 @@ from PIL import Image
 import io
 import numpy as np
 
+from fastapi.middleware.cors import CORSMiddleware
+
 # Global variable to store the loaded model
 model = None
 
@@ -30,6 +32,14 @@ app = FastAPI(
     title="YOLO Fruit Detection API",
     description="API for fruit detection using YOLOv8",
     lifespan=lifespan
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.get("/")
